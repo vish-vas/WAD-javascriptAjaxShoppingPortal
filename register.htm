@@ -1,0 +1,162 @@
+<!-- Author: Vishvas Handa
+	register.htm used to provide interface to customers for
+	registering in the system.-->
+<html xmlns="http://www.w3.org/1999/xhtml" >
+	<head>
+		<title>BuyOnline Registration</title>
+		<link rel="stylesheet" href="style.css" type="text/css"/>
+	</head>
+	<body onload="checkIfSessionExists()">
+		<h2>Register to BuyOnline!</h2><br/>
+		<p>Please fill in the details below to complete your registration:</p><br/>
+		<form method="post" name="form1" id="form1">
+			<div class="feild">
+				<label for="fname">First Name:</label><span>
+				<input id="fname" type="text" name="fname"></span>
+			</div>
+			<div class="feild">
+				<label for="sname">Sur Name:</label><span>
+				<input id="sname" type="text" name="sname"></span>
+			</div>
+			<div class="feild">
+				<label>Email address:</label>
+				<span><input id="email" type="email" name="email"></span>
+			</div>
+			<div class="feild">
+				<label>Password:</label>
+				<span><input id="pass" type="password" name="pass"></span>
+			</div>
+			<div class="feild">
+				<label>Confirm Password:</label>
+				<span><input id="pass2" type="password" name="pass2"></span>
+			</div>
+			<div class="feild">
+				<label>Phone(optional):</label>
+				<span><input id="phone" type="tel" name="phone" placeholder="eg. 03 32323232"></span>
+			</div>
+			<br>
+			<div class="feild">
+				<span><input type="button" value="Register" onclick="submitClicked()" /></span>
+			</div>
+		</form>
+		<p>Already registered? <a href="login.htm" id="register">Login here</a></p>
+		<p>BuyOnline <a href="buyonline.htm">Home</a>
+		</p>
+		<div id="out"></div>
+		<script type="text/javascript">
+			var xHRObject = false;
+			if(window.XMLHttpRequest)
+			{
+				xHRObject = new XMLHttpRequest();
+			}
+			else if(window.ActiveXObject)
+			{
+				xHRObject = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+
+			var outDiv = document.getElementById("out");
+			var fName;
+			var sName;
+			var email;
+			var pass;
+			var pass2;
+			var phone;
+			var errorStr;
+
+			function submitClicked()
+			{
+				outDiv.innerHTML = "";
+				fName = document.form1.fname.value;
+				sName = document.form1.sname.value;
+				email = document.form1.email.value;
+				pass = document.form1.pass.value;
+				pass2 = document.form1.pass2.value;
+				phone = document.form1.phone.value;
+
+				if(fName.length>0 && sName.length>0 && email.length>0 && pass.length>0 && pass2.length>0)
+				{
+					if(validateInputs())
+					{
+						var params = "fName="+encodeURIComponent(fName)+"&sName="+encodeURIComponent(sName)+"&email="+encodeURIComponent(email)+"&pass="+encodeURIComponent(pass)+"&phone="+encodeURIComponent(phone);
+						xHRObject.open("POST", "register.php", true);
+						xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+						xHRObject.onreadystatechange = getData;
+						xHRObject.send(params);
+					}
+					else
+					{
+						outDiv.innerHTML = errorStr;
+					}
+				}
+				else
+				{
+					outDiv.innerHTML = "<p class='error'>Please enter all the required feilds.</p>";
+				}
+			}
+
+			function validateInputs()
+			{
+				var flag = true;
+				errorStr = "";
+				if(pass!=pass2 || pass.length<6)
+				{
+					flag=false;
+					errorStr += "<p class='error'>The passwords entered must match and are required to consist of atleast 6 characters.</p>";
+				}
+				ePattern = /^((\w+(([\.\-~!#\*]*)\w+)*)+@([\w]+[\-]*\.)+([A-z]{2,3}))$/;
+				if(!ePattern.test(email))
+				{
+					flag=false;
+					errorStr += "<p class='error'>The entered email address is not valid.</p>";
+				}
+				if(phone!="")
+				{
+					pPattern = /^(0[0-9]{1}) [0-9]{8}$/;
+					if(!pPattern.test(phone))
+					{
+						flag=false;
+						errorStr += "<p class='error'>The entered phone number should be of the provided format i.e. 03 23232323.</p>";
+					}
+				}
+				return flag;
+			}
+
+			function getData()
+			{
+				if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var serverResponse = xHRObject.responseXML;
+					var session = serverResponse.getElementsByTagName("session");
+					var statusNode = session[0].firstChild;
+					var idNode = statusNode.nextSibling;
+					var responseNode = session[0].lastChild;
+					if(statusNode.textContent == 1)
+					{
+						outDiv.innerHTML = "<p class='success'>User Registered Successfuly!</p><br/><a href='buying.htm'>Buying Page</a>";
+						redirect();
+					}
+					else if(statusNode.textContent == 2)
+					{
+						outDiv.innerHTML = "<p class='success'>Already Logged In!</p><br/><a href='buying.htm'>Buying Page</a>";
+						redirect();
+					}
+					else if(statusNode.textContent == 0)
+					{
+						outDiv.innerHTML = "<p class='error'>This email address is already registered.</p>";
+					}
+				}
+			}
+			function redirect() 
+			{
+               window.location="buying.htm";
+            }
+            function checkIfSessionExists()
+            {
+            	xHRObject.open("POST", "login.php", true);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getData;
+				xHRObject.send(null);
+            }
+		</script>
+	</body>
+</html>

@@ -1,0 +1,135 @@
+<!--
+	Author: Vishvas Handa
+	buying.htm displays the customers available products, lets them
+	add itms to cart and purchase items.-->
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" >
+	<head>
+		<title>BuyOnline Products</title>
+		<link rel="stylesheet" href="style.css" type="text/css"/>
+	</head>
+	<body>
+		<a class="logout_lable" href="#" onclick="cnfCncPurchase('logout', '0')">Logout</a>
+		<br/>
+		<hr>
+		<br/>
+		
+		<div id="catalog" class="left-padded"></div><br/><br/>
+		<div id="cart" class="left-padded"></div>
+		<script type="text/javascript">
+			
+			xHRObject = new XMLHttpRequest();
+
+			var catalogDiv = document.getElementById("catalog");
+			var cartDiv = document.getElementById("cart");
+			checkIfSessionExists();
+			requestCatalog();
+			var get = setInterval(requestCatalog, 10000);
+			
+            function checkIfSessionExists()
+            {
+            	xHRObject.open("POST", "login.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = checkSession;
+				xHRObject.send(null);
+            }
+
+            function checkSession()
+			{
+				if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var serverResponse = xHRObject.responseXML;
+					var header = serverResponse.getElementsByTagName("session");
+					var statusNode = header[0].firstChild;
+					var idNode = statusNode.nextSibling;
+					var responseNode = header[0].lastChild;
+					if(statusNode.textContent == -1 || statusNode.textContent == 0)
+					{
+						redirect();
+					}
+				}
+			}
+
+			function redirect() 
+			{
+               window.location="logoutt.php";
+            }
+
+          	function requestCatalog()
+            {
+            	var params = "req="+encodeURIComponent("get");
+            	xHRObject.open("POST", "buying.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getData;
+				xHRObject.send(params);
+            }
+
+            function getData()
+            {
+            	if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+            		catalogDiv.innerHTML = xHRObject.responseText;
+            	}
+            }
+
+            function requestUpdate(action, itemId, itemName, itemPrice)
+            {
+            	var params = "req="+encodeURIComponent("update")+"&action="+encodeURIComponent(action)+"&iid="+encodeURIComponent(itemId)+"&iname="+encodeURIComponent(itemName)+"&iprice="+encodeURIComponent(itemPrice);
+            	xHRObject.open("POST", "buying.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getCart;
+				xHRObject.send(params);
+            }
+
+            function getCart()
+            {
+            	if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var response = xHRObject.responseText;
+					if(response.match(/\<response\>QTY0\<\/response\>/g))
+					{
+						alert("Sorry, this item is not available for sale!");
+					}
+					else
+					{
+            			cartDiv.innerHTML = response;
+            		}
+            	}
+            }
+
+            function cnfCncPurchase(action, total)
+            {
+            	var params = "req="+encodeURIComponent("checkout")+"&action="+encodeURIComponent(action)+"&total="+encodeURIComponent(total);
+            	xHRObject.open("POST", "buying.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = checkoutCart;
+				xHRObject.send(params);
+            }
+
+            function checkoutCart()
+            {
+            	if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var response = xHRObject.responseText;
+					if(response.match(/\<action\>cancel\<\/action\>/g))
+					{
+						alert("Your purchase request has been cancelled, welcome to shop next time.");
+						cartDiv.innerHTML = "";
+					}
+					else if(response.match(/\<action\>logout\<\/action\>/g))
+					{
+						cartDiv.innerHTML = "";
+						window.location="logout.htm";
+					}
+					else if(response.match(/\<action\>confirm\<\/action\>/g))
+					{
+            			var temp = response.match(/[0-9]*\.*[0-9]+/g);
+            			alert("Your purchase has been confirmed and total amount due to pay is $"+temp[2]+".");
+            			cartDiv.innerHTML = "";
+            		}
+            	}
+            }
+		</script>
+	</body>
+</html>

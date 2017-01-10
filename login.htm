@@ -1,0 +1,98 @@
+<!--Author: Vishvas Handa
+	login.htm used to provide interface to customers so they can
+	log in to the system.-->
+<html xmlns="http://www.w3.org/1999/xhtml" >
+	<head>
+		<title>BuyOnline Login</title>
+		<link rel="stylesheet" href="style.css" type="text/css"/>
+	</head>
+	<body onload="checkIfSessionExists()">
+		<form method="post" name="form1" id="form1">
+			<h2>Login to BuyOnline!</h2>
+			<br><br>
+			<div class="feild">
+			<label for="email">Email:</label>
+			<span><input id="email" type="email" name="email"></span>
+			</div>
+			<div class="feild">
+			<label for="pass">Password</label>
+			<span><input id="pass" type="password" name="pass"></span>
+			</div>
+			<br>
+			<input type="button" value="Login" onclick="submitClicked()" />
+		</form>
+		<p>New Member? <a href="register.htm" id="login">Register here</a>
+		</p>
+		<p>BuyOnline <a href="buyonline.htm">Home</a>
+		</p>
+		<div id="out"></div>
+		<script type="text/javascript">
+			var xHRObject = false;
+			if(window.XMLHttpRequest)
+			{
+				xHRObject = new XMLHttpRequest();
+			}
+			else if(window.ActiveXObject)
+			{
+				xHRObject = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+
+			var outDiv = document.getElementById("out");
+			var email;
+			var pass;
+			var errStr;
+
+			function submitClicked()
+			{
+				outDiv.innerHTML = "";
+				email = document.form1.email.value;
+				pass = document.form1.pass.value;
+
+				if(email.length>0 && pass.length>0)
+				{
+					var params = "email="+encodeURIComponent(email)+"&pass="+encodeURIComponent(pass);
+					xHRObject.open("POST", "login.php", true);
+					xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+					xHRObject.onreadystatechange = getData;
+					xHRObject.send(params);
+				}
+				else
+				{
+					outDiv.innerHTML = "<p class='error'>Please enter all the required feilds.</p>";
+				}
+			}
+
+			function getData()
+			{
+				if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var serverResponse = xHRObject.responseXML;
+					var header = serverResponse.getElementsByTagName("session");
+					var statusNode = header[0].firstChild;
+					var idNode = statusNode.nextSibling;
+					var responseNode = header[0].lastChild;
+					if(statusNode.textContent==1 || statusNode.textContent==2)
+					{
+						outDiv.innerHTML = "<p class='success'>Login Successful!</p><br/><a href='buying.htm'>Buying Page</a>";
+						redirect();
+					}
+					else if(statusNode.textContent==0)
+					{
+						outDiv.innerHTML = "<p class='error'>Login failure. Please check the Login details.</p>";
+					}
+				}
+			}
+			function redirect() 
+			{
+               window.location="buying.htm";
+            }
+            function checkIfSessionExists()
+            {
+            	xHRObject.open("POST", "login.php", true);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getData;
+				xHRObject.send(null);
+            }
+		</script>
+	</body>
+</html>

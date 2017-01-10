@@ -1,0 +1,39 @@
+/* Author: Vishvas Handa
+	style.css used to provide styling data to all the htm files.
+	*/
+.feild > label{
+	display: inline-block;
+	width: 150px;
+	vertical-align: top;
+	padding-bottom: 10px;
+}
+.error{
+	color: red;
+}
+.success{
+	color: green;
+}
+.logout_lable{
+	float:right;
+	margin-right:100px;
+}
+.itemTable{
+	text-align: center;
+	width: 900px;
+}
+.center{
+	text-align: center;
+}
+td{
+	height: 40;
+}
+.left-padded{
+	margin-left: 150px;
+}
+th{
+	height: 40;
+	background-color: grey;
+}
+.left-padd{
+	margin-left: 15px;
+}

@@ -1,0 +1,96 @@
+<!-- Author:Vishvas Handa
+	processing.htm used to provide interface to managers for processing
+	the sales data.-->
+<html xmlns="http://www.w3.org/1999/xhtml" >
+	<head>
+		<title>Mamager Processing Console</title>
+		<link rel="stylesheet" href="style.css" type="text/css"/>
+	</head>
+	<body>
+		<a href="listing.htm" class="left-padded">Listing</a>
+		<a href="processing.htm" class="left-padd">Processing</a>
+		<a class="logout_lable" href="logout.htm">Logout</a>
+		<br/>
+		<hr>
+		<br/>
+		<div id="out" class="left-padded"></div>
+		<script type="text/javascript">
+
+			xHRObject = new XMLHttpRequest();
+			var output = document.getElementById("out");
+
+			checkIfSessionExists();
+			requestCatalog();
+			
+
+			function checkIfSessionExists()
+            {
+            	xHRObject.open("POST", "mlogin.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getData;
+				xHRObject.send(null);
+            }
+			
+            function getData()
+			{
+				if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var serverResponse = xHRObject.responseXML;
+					var header = serverResponse.getElementsByTagName("session");
+					var statusNode = header[0].firstChild;
+					var idNode = statusNode.nextSibling;
+					var responseNode = header[0].lastChild;
+					if(statusNode.textContent==-1 || statusNode.textContent==0)
+					{
+						outDiv.innerHTML = "<p class='error'>Session Invalid.</p>";
+						redirect();
+						setTimeout(redirect(), 2000);
+					}
+				}
+			}
+
+			function redirect() 
+			{
+               window.location="logoutt.php";
+            }
+
+            
+          	function requestCatalog()
+            {
+            	var params = "req="+encodeURIComponent("get");
+            	xHRObject.open("POST", "processing.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getData;
+				xHRObject.send(params);
+            }
+
+            function getData()
+            {
+            	if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+            		output.innerHTML = xHRObject.responseText;
+            	}
+            }
+
+            function requestProcessing()
+            {
+            	var params = "req="+encodeURIComponent("process");
+            	xHRObject.open("POST", "processing.php", false);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getCart;
+				xHRObject.send(params);
+            }
+
+            function getCart()
+            {
+            	if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var response = xHRObject.responseText;
+					alert(response);
+					requestCatalog();
+            	}
+            }
+			
+		</script>
+	</body>
+</html>

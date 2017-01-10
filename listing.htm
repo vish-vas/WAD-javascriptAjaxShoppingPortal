@@ -1,0 +1,171 @@
+<!-- Author: Vishvas Handa
+	listing.htm used to provide inrerface to manages so they can add items to the system.-->
+<html xmlns="http://www.w3.org/1999/xhtml" >
+	<head>
+		<title>BuyOnline Product Listings</title>
+		<link rel="stylesheet" href="style.css" type="text/css"/>
+	</head>
+	<body>
+		<a href="listing.htm" class="left-padded">Listing</a>
+		<a href="processing.htm" class="left-padd">Processing</a>
+		<a class="logout_lable" href="logout.htm">Logout</a>
+		<br/>
+		<hr>
+		<br/>
+		<h3>Add new item</h3><br/><br/>
+		<form method="post" name="form1" id="form1">
+			<div class="feild">
+				<label for="name">Item Name:</label><span>
+				<input id="name" type="text" name="name"></span>
+			</div>
+			<div class="feild">
+				<label for="price">Item Price:</label><span>
+				<input id="price" type="text" name="price"></span>
+			</div>
+			<div class="feild">
+				<label>Item Quantity:</label>
+				<span><input id="quantity" type="text" name="quantity"></span>
+			</div>
+			<div class="feild">
+				<label>Description:</label>
+				<span><textarea id="description" name="description" rows="3" cols="19"></textarea></span>
+			</div>
+			<br/>
+			<div class="feild">
+				<button type="reset" value="Reset">Reset</button>
+				<span><input type="button" value="Add" onclick="submitClicked()" /></span>
+			</div>
+		</form>
+		<div id="out"></div>
+		<script type="text/javascript">
+			var xHRObject = false;
+			if(window.XMLHttpRequest)
+			{
+				xHRObject = new XMLHttpRequest();
+			}
+			else if(window.ActiveXObject)
+			{
+				xHRObject = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+
+			var outDiv = document.getElementById("out");
+			var name;
+			var price;
+			var quantity;
+			var description;
+			var errorStr;
+
+			checkIfSessionExists();
+
+			function submitClicked()
+			{
+				outDiv.innerHTML = "";
+				name = document.form1.name.value;
+				price = document.form1.price.value;
+				quantity = document.form1.quantity.value;
+				description = document.form1.description.value;
+
+				if(name.length>0 && price.length>0 && quantity.length>0 && description.length>0)
+				{
+					if(validateInputs())
+					{
+						var params = "name="+encodeURIComponent(name)+"&price="+encodeURIComponent(price)+"&quantity="+encodeURIComponent(quantity)+"&description="+encodeURIComponent(description);
+						xHRObject.open("POST", "listing.php", true);
+						xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+						xHRObject.onreadystatechange = getDataL;
+						xHRObject.send(params);
+						//outDiv.innerHTML = "<p class='success'>reg!</p>";
+					}
+					else
+					{
+						outDiv.innerHTML = errorStr;
+					}
+				}
+				else
+				{
+					outDiv.innerHTML = "<p class='error'>Please enter all the required feilds.</p>";
+				}
+			}
+
+			function validateInputs()
+			{
+				var flag = true;
+				errorStr = "";
+				if(name.length<5)
+				{
+					flag=false;
+					errorStr += "<p class='error'>The Item name can not be less than 5 characters.</p>";
+				}
+				pPattern = /^([0-9]+)(\.{0,1}[0-9]{1,2})*$/;
+				if(!pPattern.test(price))
+				{
+					flag=false;
+					errorStr += "<p class='error'>The entered price is not valid.</p>";
+				}
+				qPattern = /^[0-9]+$/;
+				if(!qPattern.test(quantity))
+				{
+					flag=false;
+					errorStr += "<p class='error'>The entered quantity is not valid.</p>";
+				}
+				if(description.length<10)
+				{
+					flag=false;
+					errorStr += "<p class='error'>The Item description can not be less than 10 characters.</p>";
+				}
+				return flag;
+			}
+
+			function getData()
+			{
+				if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var serverResponse = xHRObject.responseXML;
+					var header = serverResponse.getElementsByTagName("session");
+					var statusNode = header[0].firstChild;
+					var idNode = statusNode.nextSibling;
+					var responseNode = header[0].lastChild;
+					if(statusNode.textContent==-1 || statusNode.textContent==0)
+					{
+						outDiv.innerHTML = "<p class='error'>Session Invalid.</p>";
+						redirect();
+					}
+				}
+			}
+
+			function redirect() 
+			{
+               window.location="logoutt.php";
+            }
+
+            function checkIfSessionExists()
+            {
+            	xHRObject.open("POST", "mlogin.php", true);
+				xHRObject.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xHRObject.onreadystatechange = getData;
+				xHRObject.send(null);
+            }
+
+            function getDataL()
+			{
+				if((xHRObject.readyState==4)&&(xHRObject.status==200))
+				{
+					var serverResponse = xHRObject.responseXML;
+					var header = serverResponse.getElementsByTagName("session");
+					var statusNode = header[0].firstChild;
+					var idNode = statusNode.nextSibling;
+					var nameNode = idNode.nextSibling;
+					var responseNode = header[0].lastChild;
+					if(statusNode.textContent==1)
+					{
+						outDiv.innerHTML = "<p class='success'>Item added successfuly! Item id: "+idNode.textContent+" Item Name: "+nameNode.textContent+".</p>";
+					}
+					else if(statusNode.textContent==0)
+					{
+						outDiv.innerHTML = "<p class='error'>Item add failed.</p>";
+					}
+				}
+			}
+		</script>
+	</body>
+</html>
